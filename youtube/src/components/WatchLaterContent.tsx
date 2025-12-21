@@ -177,7 +177,7 @@ export default function WatchLaterContent() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!user?. _id) {
+    if (!user?._id) {
       setLoading(false);
       return;
     }

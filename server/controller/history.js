@@ -82,7 +82,22 @@ export const getallhistoryVideo = async (req, res) => {
       })
       .sort({ createdAt: -1 }) // Sort by newest first
       .exec();
-    return res.status(200).json(historyvideo);
+    
+    // Filter out history entries where the video has been deleted
+    // AND remove duplicates (keep only the most recent entry per video)
+    const seenVideoIds = new Set();
+    const validHistory = historyvideo.filter(item => {
+      if (item.videoid === null) return false;
+      
+      const videoIdStr = item.videoid._id.toString();
+      if (seenVideoIds.has(videoIdStr)) {
+        return false; // Skip duplicate
+      }
+      seenVideoIds.add(videoIdStr);
+      return true;
+    });
+    
+    return res.status(200).json(validHistory);
   } catch (error) {
     console.error("error:", error);
     return res.status(500).json({ message: "Something went wrong" });
@@ -95,6 +110,18 @@ export const removeHistory = async (req, res) => {
   try {
     await history.findByIdAndDelete(historyId);
     return res.status(200).json({ message: "History removed successfully" });
+  } catch (error) {
+    console.error("error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// Clear all history for a user
+export const clearAllHistory = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    await history.deleteMany({ viewer: userId });
+    return res.status(200).json({ message: "All history cleared successfully" });
   } catch (error) {
     console.error("error:", error);
     return res.status(500).json({ message: "Something went wrong" });

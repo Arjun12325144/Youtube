@@ -15,12 +15,14 @@ import {
   getallhistoryVideo,
   handlehistory,
   handleview,
-  removeHistory, // Add this
+  removeHistory,
+  clearAllHistory,
 } from "../controller/history.js";
 
 const routes = express.Router();
-routes.get("/user/:userId", getallhistoryVideo); // Changed route
+routes.get("/user/:userId", getallhistoryVideo);
 routes.post("/views/:videoId", handleview);
 routes.post("/:videoId", handlehistory);
-routes.delete("/:historyId", removeHistory); // Add delete route
+routes.delete("/clear/:userId", clearAllHistory); // Clear all history route
+routes.delete("/:historyId", removeHistory);
 export default routes;

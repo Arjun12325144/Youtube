@@ -38,16 +38,32 @@ import watchlaterroutes from "./routes/watchlater.js";
 import historyrroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
 import subscriptionRoutes from "./routes/subscription.js";
+import downloadRoutes from "./routes/download.js";
+import paymentRoutes from "./routes/payment.js";
+
 dotenv.config();
 const app = express();
 import path from "path";
-app.use(cors());
+
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL, "http://localhost:3000"]
+    : true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use("/uploads", express.static(path.join("uploads")));
+
 app.get("/", (req, res) => {
-  res.send("You tube backend is working");
+  res.send("YouTube backend is working - All features enabled");
 });
+
 app.use(bodyParser.json());
 
 // Serve static files from uploads directory
@@ -61,6 +77,9 @@ app.use("/watch", watchlaterroutes);
 app.use("/history", historyrroutes);
 app.use("/comment", commentroutes);
 app.use("/subscribe", subscriptionRoutes);
+app.use("/download", downloadRoutes);
+app.use("/payment", paymentRoutes);
+
 const PORT = process.env.PORT || 5000;
 
 // Start HTTP server and attach Socket.IO

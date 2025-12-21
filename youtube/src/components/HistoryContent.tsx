@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, X, Clock } from "lucide-react";
+import { MoreVertical, X, Clock, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +13,67 @@ import {
 } from "@/components/ui/dropdown-menu";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
+
+// Video thumbnail component with hover to play
+function VideoThumbnail({ filepath, title }: { filepath: string; title: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
+  const videoUrl = filepath?.startsWith("http")
+    ? filepath
+    : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${filepath}`;
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (videoRef.current && !videoError) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => setVideoError(true));
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <div
+      className="relative w-44 aspect-video bg-[var(--color-muted)] rounded-lg overflow-hidden"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="w-full h-full object-cover"
+        preload="metadata"
+        muted
+        loop
+        playsInline
+        onError={() => setVideoError(true)}
+      />
+      
+      {/* Play icon overlay when not hovering */}
+      {!isHovered && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
+            <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+          </div>
+        </div>
+      )}
+      
+      {/* Duration badge */}
+      <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
+        {/* You can add actual duration here if available */}
+        0:30
+      </div>
+    </div>
+  );
+}
 
 export default function HistoryContent() {
   const [history, setHistory] = useState<any[]>([]);
@@ -32,7 +93,9 @@ export default function HistoryContent() {
 
     try {
       const response = await axiosInstance.get(`/history/user/${user._id}`);
-      setHistory(response.data);
+      // Filter out history items where the video has been deleted (videoid is null)
+      const validHistory = (response.data || []).filter((item: any) => item.videoid !== null);
+      setHistory(validHistory);
     } catch (error) {
       console.error("Error loading history:", error);
     } finally {
@@ -95,7 +158,7 @@ export default function HistoryContent() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600">{history.length} videos</p>
+        <p className="text-sm text-[var(--color-muted-foreground)]">{history.length} videos</p>
       </div>
 
       <div className="space-y-4">
@@ -108,35 +171,32 @@ export default function HistoryContent() {
           return (
             <div key={item._id} className="flex gap-4 group">
               <Link href={`/watch/${item.videoid._id}`} className="flex-shrink-0">
-                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
-                  {item.videoid.filepath ? (
-                    <video
-                      src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${item.videoid.filepath}`}
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
-                      preload="metadata"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      No video
-                    </div>
-                  )}
-                </div>
+                {item.videoid.filepath ? (
+                  <VideoThumbnail 
+                    filepath={item.videoid.filepath} 
+                    title={item.videoid.videotitle || "Video"} 
+                  />
+                ) : (
+                  <div className="w-44 aspect-video bg-[var(--color-muted)] rounded-lg flex items-center justify-center text-[var(--color-muted-foreground)]">
+                    No video
+                  </div>
+                )}
               </Link>
 
               <div className="flex-1 min-w-0">
                 <Link href={`/watch/${item.videoid._id}`}>
-                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
+                  <h3 className="font-medium text-sm line-clamp-2 text-[var(--color-foreground)] group-hover:text-[var(--color-primary)] transition-colors mb-1">
                     {item.videoid.videotitle || "Untitled Video"}
                   </h3>
                 </Link>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--color-muted-foreground)]">
                   {item.videoid.videochanel || "Unknown Channel"}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[var(--color-muted-foreground)]">
                   {item.videoid.views?.toLocaleString() || "0"} views •{" "}
                   {formatDate(item.videoid.createdAt)}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[var(--color-muted-foreground)] mt-1">
                   Watched {formatDate(item.createdAt)}
                 </p>
               </div>

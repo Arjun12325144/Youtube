@@ -41,11 +41,14 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import axiosInstance from "@/lib/axiosinstance";
 import { getSocket } from "@/lib/socket";
+import { Video } from "lucide-react";
+import VideoCall from "./VideoCall";
 
 const ChannelHeader = ({ channel, user }: any) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+  const [showVideoCall, setShowVideoCall] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -144,6 +147,17 @@ const ChannelHeader = ({ channel, user }: any) => {
               >
                 {isSubscribed ? "Subscribed" : "Subscribe"}
               </Button>
+              
+              {/* Video Call Button */}
+              <Button
+                variant="outline"
+                onClick={() => setShowVideoCall(true)}
+                className="flex items-center gap-2"
+              >
+                <Video className="w-4 h-4" />
+                Video Call
+              </Button>
+              
               {subscriberCount !== null && (
                 <div className="text-sm text-gray-600 self-center">
                   {subscriberCount.toLocaleString()} subscribers
@@ -153,6 +167,20 @@ const ChannelHeader = ({ channel, user }: any) => {
           )}
         </div>
       </div>
+
+      {/* Video Call Section */}
+      {showVideoCall && user && (
+        <div 
+          className="mx-4 mb-4 rounded-lg overflow-hidden"
+          style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+        >
+          <VideoCall
+            roomId={channel?._id || "default-room"}
+            userId={user?._id || "anonymous"}
+            userName={user?.name || "Anonymous"}
+          />
+        </div>
+      )}
     </div>
   );
 };
