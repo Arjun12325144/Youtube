@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 import video from "../Models/video.js";
-import { uploadFromBuffer, deleteFromCloudinary, generateThumbnail } from "../config/cloudinary.js";
+import cloudinary, { uploadFromBuffer, deleteFromCloudinary, generateThumbnail } from "../config/cloudinary.js";
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 
@@ -106,14 +106,26 @@ export const getallvideo = async (req, res) => {
   try {
     if (mongoose.connection && mongoose.connection.readyState === 1) {
       const files = await video.find().lean();
-      // Normalize filepath - keep full URLs (Cloudinary) as-is, fix local paths
+      // Normalize filepath - generate Cloudinary URLs for videos with cloudinaryPublicId
       const normalized = (files || []).map((f) => {
         const filepath = f.filepath || "";
+        
         // If it's already a full URL (Cloudinary), don't modify it
         if (filepath.startsWith("http://") || filepath.startsWith("https://")) {
           return { ...f };
         }
-        // For local files, normalize to web-friendly path
+        
+        // If video has cloudinaryPublicId, generate the Cloudinary URL
+        if (f.cloudinaryPublicId) {
+          const cloudinaryUrl = cloudinary.url(f.cloudinaryPublicId, {
+            resource_type: "video",
+            format: "mp4",
+          });
+          return { ...f, filepath: cloudinaryUrl };
+        }
+        
+        // For local files (old videos), normalize to web-friendly path
+        // These won't work on Vercel but will work locally
         const name = path.basename(filepath);
         return { ...f, filepath: `/uploads/${name}` };
       });
@@ -159,13 +171,24 @@ export const getVideosByUploader = async (req, res) => {
       // Query videos by uploader ObjectId
       const files = await video.find({ uploader: uploaderId }).lean();
       
-      // Normalize filepath - keep full URLs (Cloudinary) as-is, fix local paths
+      // Normalize filepath - generate Cloudinary URLs for videos with cloudinaryPublicId
       const normalized = (files || []).map((f) => {
         const filepath = f.filepath || "";
+        
         // If it's already a full URL (Cloudinary), don't modify it
         if (filepath.startsWith("http://") || filepath.startsWith("https://")) {
           return { ...f };
         }
+        
+        // If video has cloudinaryPublicId, generate the Cloudinary URL
+        if (f.cloudinaryPublicId) {
+          const cloudinaryUrl = cloudinary.url(f.cloudinaryPublicId, {
+            resource_type: "video",
+            format: "mp4",
+          });
+          return { ...f, filepath: cloudinaryUrl };
+        }
+        
         // For local files, normalize to web-friendly path
         const name = path.basename(filepath);
         return { ...f, filepath: `/uploads/${name}` };
