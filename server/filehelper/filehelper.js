@@ -13,22 +13,24 @@ try {
   console.log("Skipping uploads directory creation (serverless environment)");
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // For serverless, use /tmp directory
-    const destDir = process.env.VERCEL ? "/tmp" : uploadsDir;
-    cb(null, destDir);
-  },
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      new Date().toISOString().replace(/:/g, "-") + "-" + file.originalname
-    );
-  },
-});
+// Use memory storage for Vercel (upload to Cloudinary), disk storage for local
+const storage = process.env.VERCEL 
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+      },
+      filename: (req, file, cb) => {
+        cb(
+          null,
+          new Date().toISOString().replace(/:/g, "-") + "-" + file.originalname
+        );
+      },
+    });
+
 const filefilter = (req, file, cb) => {
-  // Accept any video/* mime type (mp4, webm, quicktime/mov, avi, etc.)
-  if (file.mimetype && file.mimetype.startsWith("video/")) {
+  // Accept video and image files
+  if (file.mimetype && (file.mimetype.startsWith("video/") || file.mimetype.startsWith("image/"))) {
     cb(null, true);
   } else {
     cb(null, false);
@@ -38,6 +40,7 @@ const filefilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: filefilter,
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB limit
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit for Vercel
 });
+
 export default upload;

@@ -40,9 +40,15 @@ const videoSchema = new mongoose.Schema({
     uploader:{
         type:String, 
     },
-
-
-
+    // Cloudinary fields
+    cloudinaryPublicId: {
+        type: String,
+        default: null,
+    },
+    thumbnailUrl: {
+        type: String,
+        default: null,
+    },
 },{
     timestamps:true,
 })

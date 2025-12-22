@@ -24,20 +24,28 @@ interface VideoPlayerProps {
     videotitle: string;
     filepath: string;
     filetype?: string;
+    thumbnailUrl?: string;
   };
 }
 
 export default function VideoPlayer({ video }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videos = "/video/vdo.mp4";
   const [hasError, setHasError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  // Check if filepath is already a full URL (Cloudinary) or needs backend prefix
+  const filepath = video?.filepath || "";
+  const isFullUrl = filepath.startsWith("http://") || filepath.startsWith("https://");
+  
   const base = (
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
   ).replace(/\/+$/, "");
-  const filepath = video?.filepath || "";
-  const src = `${base}${filepath.startsWith("/") ? filepath : "/" + filepath}`;
+  
+  const src = isFullUrl 
+    ? filepath 
+    : `${base}${filepath.startsWith("/") ? filepath : "/" + filepath}`;
+
+  const posterUrl = video?.thumbnailUrl || `/placeholder.svg?height=480&width=854`;
 
   useEffect(() => {
     setHasError(false);
@@ -54,10 +62,9 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 
       {hasError ? (
         <div className="w-full h-full flex items-center justify-center text-white">
-          <div>
+          <div className="text-center p-4">
             <div className="font-semibold">Unable to load video</div>
-            <div className="text-sm">Check server is running and video file exists.</div>
-            <div className="text-xs mt-2">Source: {src}</div>
+            <div className="text-sm text-gray-400">The video may be processing or unavailable.</div>
           </div>
         </div>
       ) : (
@@ -66,7 +73,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
           ref={videoRef}
           className="w-full h-full"
           controls
-          poster={`/placeholder.svg?height=480&width=854`}
+          poster={posterUrl}
           onError={(e) => {
             console.error("Video element error:", e, "src:", src);
             setHasError(true);

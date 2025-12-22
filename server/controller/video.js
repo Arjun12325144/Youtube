@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 import video from "../Models/video.js";
+import { uploadFromBuffer, deleteFromCloudinary, generateThumbnail } from "../config/cloudinary.js";
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 
@@ -21,55 +22,80 @@ export const uploadvideo = async (req, res) => {
     }
 
     // Use uploader from request body if provided, otherwise use a placeholder
-    // In a production app with auth, you'd extract this from a JWT token
     let uploader = req.body.uploader;
     if (!uploader || uploader.length !== 24) {
-      // If uploader is not a valid MongoDB ObjectId, try to use it as a channel name
-      // (for backward compatibility with old uploads)
       uploader = req.body.uploader || "unknown";
     }
 
-    // Build video metadata from the uploaded file and normalize the filepath to a web URL
-    const filename = path.basename(req.file.path);
-    const webPath = path.join("/uploads", filename).replace(/\\/g, "/");
+    let videoUrl, cloudinaryPublicId, thumbnailUrl;
+
+    // Check if running on Vercel (serverless) - use Cloudinary
+    if (process.env.VERCEL || process.env.USE_CLOUDINARY === "true") {
+      try {
+        // Upload to Cloudinary from buffer
+        const cloudinaryResult = await uploadFromBuffer(req.file.buffer, {
+          resourceType: "video",
+          folder: "youtube-clone/videos",
+        });
+        
+        videoUrl = cloudinaryResult.url;
+        cloudinaryPublicId = cloudinaryResult.publicId;
+        thumbnailUrl = generateThumbnail(cloudinaryResult.publicId);
+      } catch (cloudError) {
+        console.error("Cloudinary upload error:", cloudError);
+        return res.status(500).json({ 
+          message: "Error uploading to cloud storage", 
+          error: cloudError.message 
+        });
+      }
+    } else {
+      // Local storage - use disk path
+      const filename = path.basename(req.file.path);
+      videoUrl = path.join("/uploads", filename).replace(/\\/g, "/");
+      cloudinaryPublicId = null;
+      thumbnailUrl = null;
+    }
 
     const fileMeta = {
       videotitle: req.body.videotitle,
       filename: req.file.originalname,
-      filepath: webPath,
+      filepath: videoUrl,
       filetype: req.file.mimetype,
       filesize: req.file.size,
       videochanel: req.body.videochanel,
       uploader: uploader,
       description: req.body.description || "",
+      cloudinaryPublicId: cloudinaryPublicId,
+      thumbnailUrl: thumbnailUrl,
     };
 
-    // Attempt to persist to DB only if mongoose is connected
+    // Attempt to persist to DB
     if (mongoose.connection && mongoose.connection.readyState === 1) {
       try {
         const doc = new video(fileMeta);
         await doc.save();
-        // Ensure we return the web path (not the original server filesystem path)
-        const responsePath = doc.filepath || fileMeta.filepath;
         return res.status(201).json({
-          message: "File uploaded and saved to database successfully",
-          video: { id: doc._id, title: doc.videotitle, path: responsePath },
+          message: "Video uploaded successfully",
+          video: { 
+            id: doc._id, 
+            title: doc.videotitle, 
+            path: doc.filepath,
+            thumbnail: doc.thumbnailUrl 
+          },
         });
       } catch (dbErr) {
         console.error("Video DB save error:", dbErr);
-        // fallthrough to return a partial success below
       }
     }
 
-    // If DB is not available or save failed, still return success for file stored on disk
-    const fallbackVideo = {
-      id: null,
-      title: fileMeta.videotitle,
-      path: fileMeta.filepath,
-      note: "File saved to disk but database is currently unavailable.",
-    };
-
-    return res.status(201).json({ message: "File uploaded (disk only)", video: fallbackVideo });
+    // Fallback response
+    return res.status(201).json({ 
+      message: "Video uploaded", 
+      video: {
+        title: fileMeta.videotitle,
+        path: fileMeta.filepath,
+      }
+    });
   } catch (error) {
     console.error("Video upload error:", error);
     return res.status(500).json({ message: "Error uploading video", error: error.message });
