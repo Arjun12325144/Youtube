@@ -3,15 +3,21 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Create uploads directory if it doesn't exist
+// Create uploads directory if it doesn't exist (only in non-serverless environment)
 const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (error) {
+  console.log("Skipping uploads directory creation (serverless environment)");
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    // For serverless, use /tmp directory
+    const destDir = process.env.VERCEL ? "/tmp" : uploadsDir;
+    cb(null, destDir);
   },
   filename: (req, file, cb) => {
     cb(
