@@ -14,6 +14,7 @@ interface VideoCardProps {
     createdAt?: string;
     filepath?: string;
     thumbnail?: string;
+    thumbnailUrl?: string;
     duration?: string;
   };
 }
