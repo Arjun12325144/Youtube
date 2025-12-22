@@ -43,7 +43,6 @@ import paymentRoutes from "./routes/payment.js";
 
 dotenv.config();
 const app = express();
-import path from "path";
 
 // CORS configuration for production
 const corsOptions = {
@@ -58,16 +57,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
-app.use("/uploads", express.static(path.join("uploads")));
-
-app.get("/", (req, res) => {
-  res.send("YouTube backend is working - All features enabled");
-});
-
 app.use(bodyParser.json());
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.get("/", (req, res) => {
+  res.json({ 
+    status: "success",
+    message: "YouTube Clone API is running",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // API routes
 app.use("/user", userroutes);
@@ -80,29 +78,41 @@ app.use("/subscribe", subscriptionRoutes);
 app.use("/download", downloadRoutes);
 app.use("/payment", paymentRoutes);
 
-const PORT = process.env.PORT || 5000;
+// MongoDB connection with caching for serverless
+let cachedDb = null;
 
-// Connect to MongoDB
-const DBURL = process.env.DB_URL;
-mongoose
-  .connect(DBURL, {
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-  })
-  .then(() => {
+async function connectToDatabase() {
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  try {
+    const DBURL = process.env.DB_URL;
+    const connection = await mongoose.connect(DBURL, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    
+    cachedDb = connection;
     console.log("MongoDB connected successfully");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error.message || error);
-  });
+    return connection;
+  } catch (error) {
+    console.error("MongoDB connection error:", error.message);
+    throw error;
+  }
+}
 
-// Only start server if not in Vercel serverless environment
-if (process.env.VERCEL !== "1") {
+// Connect on startup
+connectToDatabase().catch(err => console.error("Initial DB connection failed:", err));
+
+// For local development
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
   const server = app.listen(PORT, () => {
-    console.log(`server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 
-  // Initialize Socket.IO (only for non-Vercel deployment)
+  // Initialize Socket.IO only for local development
   import("./socket.js").then(({ initSocket }) => {
     try {
       initSocket(server);
@@ -110,16 +120,8 @@ if (process.env.VERCEL !== "1") {
     } catch (err) {
       console.error("Failed to initialize Socket.IO:", err);
     }
-  });
+  }).catch(err => console.error("Socket.IO import failed:", err));
 }
 
 // Export for Vercel serverless
 export default app;
-
-// Protect the process from unexpected crashes so dev server stays up while DB is unreachable
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled Rejection:", reason);
-});
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-});
