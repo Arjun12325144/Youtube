@@ -12,6 +12,12 @@ export function getSocket(): Socket | null {
     process.env.BACKEND_URL || 
     "http://localhost:5000";
 
+  // Disable Socket.IO for Vercel deployments (serverless doesn't support WebSocket)
+  if (backend.includes('.vercel.app')) {
+    console.warn("Socket.IO disabled: Backend is on Vercel serverless (WebSocket not supported)");
+    return null;
+  }
+
   try {
     socket = io(backend, { 
       transports: ["websocket", "polling"], 
