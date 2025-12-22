@@ -62,9 +62,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         // Add timeout to prevent hanging
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        const response = await fetch("https://ipapi.co/json/", {
+        const response = await fetch("https://ip-api.com/json/?fields=city,regionName,country", {
           signal: controller.signal,
         }).catch(() => null);
         
@@ -74,8 +74,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           const data = await response.json();
           const location: UserLocation = {
             city: data.city || "Unknown",
-            state: data.region || "Unknown",
-            country: data.country_name || "Unknown",
+            state: data.regionName || "Unknown",
+            country: data.country || "Unknown",
             isSouthIndia: SOUTH_INDIAN_STATES.some(
               (state) =>
                 data.region?.toLowerCase().includes(state) ||

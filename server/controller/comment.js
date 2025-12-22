@@ -45,6 +45,11 @@ export const postcomment = async (req, res) => {
 
 export const getallcomment = async (req, res) => {
   const { videoid } = req.params;
+  
+  if (!videoid) {
+    return res.status(400).json({ message: "Video ID is required" });
+  }
+  
   try {
     // Only get non-deleted comments
     const commentvideo = await comment.find({ 
@@ -53,8 +58,8 @@ export const getallcomment = async (req, res) => {
     }).sort({ createdAt: -1 });
     return res.status(200).json(commentvideo);
   } catch (error) {
-    console.error("Error getting comments:", error);
-    return res.status(500).json({ message: "Something went wrong" });
+    console.error("Error getting comments:", error.message);
+    return res.status(500).json({ message: "Error loading comments", error: error.message });
   }
 };
 

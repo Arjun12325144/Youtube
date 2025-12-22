@@ -88,9 +88,9 @@ const Comments = ({ videoId }: { videoId: string }) => {
     try {
       // Add timeout to prevent hanging
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       
-      const response = await fetch("https://ipapi.co/json/", {
+      const response = await fetch("https://ip-api.com/json/?fields=city,country", {
         signal: controller.signal,
       }).catch(() => null);
       
@@ -100,7 +100,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
         const data = await response.json();
         setUserLocation({
           city: data.city || "Unknown",
-          country: data.country_name || "Unknown",
+          country: data.country || "Unknown",
         });
       } else {
         // Fallback location
