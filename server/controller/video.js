@@ -102,6 +102,12 @@ export const uploadvideo = async (req, res) => {
   }
 };
 
+// Helper function to generate Cloudinary video URL
+const getCloudinaryVideoUrl = (publicId) => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "dl5jvvlk9";
+  return `https://res.cloudinary.com/${cloudName}/video/upload/${publicId}.mp4`;
+};
+
 export const getallvideo = async (req, res) => {
   try {
     if (mongoose.connection && mongoose.connection.readyState === 1) {
@@ -115,12 +121,9 @@ export const getallvideo = async (req, res) => {
           return { ...f };
         }
         
-        // If video has cloudinaryPublicId, generate the Cloudinary URL
+        // If video has cloudinaryPublicId, generate the Cloudinary URL directly
         if (f.cloudinaryPublicId) {
-          const cloudinaryUrl = cloudinary.url(f.cloudinaryPublicId, {
-            resource_type: "video",
-            format: "mp4",
-          });
+          const cloudinaryUrl = getCloudinaryVideoUrl(f.cloudinaryPublicId);
           return { ...f, filepath: cloudinaryUrl };
         }
         
@@ -180,12 +183,9 @@ export const getVideosByUploader = async (req, res) => {
           return { ...f };
         }
         
-        // If video has cloudinaryPublicId, generate the Cloudinary URL
+        // If video has cloudinaryPublicId, generate the Cloudinary URL directly
         if (f.cloudinaryPublicId) {
-          const cloudinaryUrl = cloudinary.url(f.cloudinaryPublicId, {
-            resource_type: "video",
-            format: "mp4",
-          });
+          const cloudinaryUrl = getCloudinaryVideoUrl(f.cloudinaryPublicId);
           return { ...f, filepath: cloudinaryUrl };
         }
         
