@@ -82,20 +82,7 @@ app.use("/payment", paymentRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-// Start HTTP server and attach Socket.IO
-const server = app.listen(PORT, () => {
-  console.log(`server running on port ${PORT}`);
-});
-
-// Initialize Socket.IO
-import { initSocket } from "./socket.js";
-try {
-  initSocket(server);
-  console.log("Socket.IO initialized");
-} catch (err) {
-  console.error("Failed to initialize Socket.IO:", err);
-}
-
+// Connect to MongoDB
 const DBURL = process.env.DB_URL;
 mongoose
   .connect(DBURL, {
@@ -107,8 +94,27 @@ mongoose
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error.message || error);
-    // Do not exit process here; continue running so the API can still respond to non-DB routes
   });
+
+// Only start server if not in Vercel serverless environment
+if (process.env.VERCEL !== "1") {
+  const server = app.listen(PORT, () => {
+    console.log(`server running on port ${PORT}`);
+  });
+
+  // Initialize Socket.IO (only for non-Vercel deployment)
+  import("./socket.js").then(({ initSocket }) => {
+    try {
+      initSocket(server);
+      console.log("Socket.IO initialized");
+    } catch (err) {
+      console.error("Failed to initialize Socket.IO:", err);
+    }
+  });
+}
+
+// Export for Vercel serverless
+export default app;
 
 // Protect the process from unexpected crashes so dev server stays up while DB is unreachable
 process.on("unhandledRejection", (reason) => {
