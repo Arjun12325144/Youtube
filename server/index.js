@@ -74,8 +74,8 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 }));
 
-// Handle preflight requests
-app.options('*', cors());
+// Handle preflight requests - use regex pattern instead of '*'
+app.options(/(.*)/, cors());
 
 app.use(express.json({ limit: "100mb", extended: true }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));
