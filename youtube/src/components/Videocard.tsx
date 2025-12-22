@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Play } from "lucide-react";
+import { getThumbnailUrl } from "@/lib/utils";
 
 interface VideoCardProps {
   video: {
@@ -15,6 +16,7 @@ interface VideoCardProps {
     filepath?: string;
     thumbnail?: string;
     thumbnailUrl?: string;
+    cloudinaryPublicId?: string;
     duration?: string;
   };
 }
@@ -23,12 +25,8 @@ export default function VideoCard({ video }: VideoCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Use thumbnail if available, otherwise generate a placeholder
-  const thumbnailUrl = video?.thumbnail?.startsWith("http")
-    ? video.thumbnail
-    : video?.thumbnailUrl?.startsWith("http")
-    ? video.thumbnailUrl
-    : null;
+  // Use the utility function to get the proper thumbnail URL
+  const thumbnailUrl = getThumbnailUrl(video);
 
   const formatViews = (views: number) => {
     if (views >= 1000000) {
@@ -57,7 +55,7 @@ export default function VideoCard({ video }: VideoCardProps) {
           onMouseLeave={handleMouseLeave}
         >
           {/* Thumbnail image */}
-          {thumbnailUrl && !imageError ? (
+          {thumbnailUrl && thumbnailUrl.startsWith("http") && !imageError ? (
             <img
               src={thumbnailUrl}
               alt={video?.videotitle || "Video thumbnail"}

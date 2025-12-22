@@ -11,6 +11,7 @@ import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import VideoCall from "@/components/VideoCall";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
+import { getVideoUrl, getThumbnailUrl } from "@/lib/utils";
 import { Download, Loader2, Video as VideoIcon, Phone, PhoneOff, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function WatchPage() {
@@ -130,9 +131,8 @@ export default function WatchPage() {
     );
   }
 
-  const videoUrl = selectedVideo.filepath?.startsWith("http")
-    ? selectedVideo.filepath
-    : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${selectedVideo.filepath}`;
+  const videoUrl = getVideoUrl(selectedVideo);
+  const thumbnailUrl = getThumbnailUrl(selectedVideo);
 
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
@@ -146,7 +146,7 @@ export default function WatchPage() {
                 <div className="rounded-xl overflow-hidden bg-black aspect-video">
                   <CustomVideoPlayer
                     src={videoUrl}
-                    poster={selectedVideo.thumbnail}
+                    poster={thumbnailUrl}
                     onNextVideo={() => relatedVideos.length > 0 && router.push(`/watch/${relatedVideos[0]._id}`)}
                     onShowComments={() => commentsRef.current?.scrollIntoView({ behavior: "smooth" })}
                   />
