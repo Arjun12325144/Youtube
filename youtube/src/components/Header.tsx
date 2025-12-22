@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Menu, Mic, Search, Sun, Moon, Upload, LogOut, User, Video } from "lucide-react";
+import { Bell, Menu, Mic, Search, Sun, Moon, Upload, LogOut, User, Video, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
@@ -19,6 +19,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,14 +30,48 @@ export default function Header({ onMenuClick }: HeaderProps) {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowMobileSearch(false);
     }
   };
 
+  // Mobile search overlay
+  if (showMobileSearch) {
+    return (
+      <>
+        <header className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center gap-2 px-2 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+          <button
+            onClick={() => setShowMobileSearch(false)}
+            className="p-2 rounded-full hover:bg-[var(--color-secondary)] transition-colors"
+          >
+            <X className="w-6 h-6 text-[var(--color-foreground)]" />
+          </button>
+          <form onSubmit={handleSearch} className="flex-1 flex">
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              className="flex-1 h-10 px-4 rounded-l-full border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none focus:border-blue-500"
+            />
+            <button
+              type="submit"
+              className="h-10 px-4 rounded-r-full bg-[var(--color-secondary)] border border-l-0 border-[var(--color-border)]"
+            >
+              <Search className="w-5 h-5 text-[var(--color-foreground)]" />
+            </button>
+          </form>
+        </header>
+        <Channeldialogue open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      </>
+    );
+  }
+
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center justify-between px-4 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center justify-between px-2 sm:px-4 bg-[var(--color-background)] border-b border-[var(--color-border)]">
         {/* Left Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={onMenuClick}
             className="p-2 rounded-full hover:bg-[var(--color-secondary)] transition-colors"
@@ -56,8 +91,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </Link>
         </div>
 
-        {/* Center Section - Search */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4 hidden sm:flex">
+        {/* Center Section - Search (hidden on mobile) */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4 hidden md:flex">
           <div className="flex w-full">
             <input
               type="text"
@@ -75,14 +110,22 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </div>
           <button
             type="button"
-            className="ml-3 p-2.5 rounded-full bg-[var(--color-secondary)] hover:bg-[var(--color-accent)] transition-colors"
+            className="ml-3 p-2.5 rounded-full bg-[var(--color-secondary)] hover:bg-[var(--color-accent)] transition-colors hidden lg:flex"
           >
             <Mic className="w-5 h-5 text-[var(--color-foreground)]" />
           </button>
         </form>
 
         {/* Right Section */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setShowMobileSearch(true)}
+            className="p-2 rounded-full hover:bg-[var(--color-secondary)] transition-colors md:hidden"
+          >
+            <Search className="w-5 h-5 text-[var(--color-foreground)]" />
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -107,14 +150,15 @@ export default function Header({ onMenuClick }: HeaderProps) {
                     setIsDialogOpen(true);
                   }
                 }}
+                className="hidden sm:block"
               >
                 <button className="p-2 rounded-full hover:bg-[var(--color-secondary)] transition-colors">
                   <Upload className="w-5 h-5 text-[var(--color-foreground)]" />
                 </button>
               </Link>
 
-              {/* Notifications */}
-              <button className="p-2 rounded-full hover:bg-[var(--color-secondary)] transition-colors">
+              {/* Notifications - hidden on mobile */}
+              <button className="p-2 rounded-full hover:bg-[var(--color-secondary)] transition-colors hidden sm:block">
                 <Bell className="w-5 h-5 text-[var(--color-foreground)]" />
               </button>
 

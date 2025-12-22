@@ -3,6 +3,8 @@ import ChannelHeader from "@/components/ChannelHeader";
 import Channeltabs from "@/components/Channeltabs";
 import ChannelVideos from "@/components/ChannelVideos";
 import VideoUploader from "@/components/VideoUploader";
+import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
 import { useRouter } from "next/router";
@@ -16,6 +18,17 @@ const ChannelPage = () => {
   const [channelData, setChannelData] = useState<any>(null);
   const [videos, setVideos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -62,61 +75,39 @@ const ChannelPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 min-h-screen bg-white flex items-center justify-center">
-        <div>Loading...</div>
+      <div className="flex-1 min-h-screen bg-[var(--color-background)] flex items-center justify-center">
+        <div className="text-[var(--color-foreground)]">Loading...</div>
       </div>
     );
   }
 
   if (!channelData) {
     return (
-      <div className="flex-1 min-h-screen bg-white flex items-center justify-center">
-        <div>Channel not found</div>
+      <div className="flex-1 min-h-screen bg-[var(--color-background)] flex items-center justify-center">
+        <div className="text-[var(--color-foreground)]">Channel not found</div>
       </div>
     );
   }
 
-  // const videos = [
-  //   {
-  //     _id: "1",
-  //     videotitle: "Amazing Nature Documentary",
-  //     filename: "nature-doc.mp4",
-  //     filetype: "video/mp4",
-  //     filepath: "/videos/nature-doc.mp4",
-  //     filesize: "500MB",
-  //     videochanel: "Nature Channel",
-  //     Like: 1250,
-  //     views: 45000,
-  //     uploader: "nature_lover",
-  //     createdAt: new Date().toISOString(),
-  //   },
-  //   {
-  //     _id: "2",
-  //     videotitle: "Cooking Tutorial: Perfect Pasta",
-  //     filename: "pasta-tutorial.mp4",
-  //     filetype: "video/mp4",
-  //     filepath: "/videos/pasta-tutorial.mp4",
-  //     filesize: "300MB",
-  //     videochanel: "Chef's Kitchen",
-  //     Like: 890,
-  //     views: 23000,
-  //     uploader: "chef_master",
-  //     createdAt: new Date(Date.now() - 86400000).toISOString(),
-  //   },
-  // ];
+  const mainClass = `flex-1 transition-all duration-300 pt-14 pb-16 lg:pb-0 ${!isMobile ? (sidebarOpen ? "ml-60" : "ml-[72px]") : "ml-0"}`;
 
   return (
-    <div className="flex-1 min-h-screen bg-white">
-      <div className="max-w-full mx-auto">
-        <ChannelHeader channel={channelData} user={user} />
-        <Channeltabs />
-        <div className="px-4 pb-8">
-          <VideoUploader channelId={id} channelName={channelData?.channelname} />
+    <div className="min-h-screen bg-[var(--color-background)]">
+      <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+      
+      <main className={mainClass}>
+        <div className="max-w-full mx-auto">
+          <ChannelHeader channel={channelData} user={user} />
+          <Channeltabs />
+          <div className="px-2 sm:px-4 pb-8">
+            <VideoUploader channelId={id} channelName={channelData?.channelname} />
+          </div>
+          <div className="px-2 sm:px-4 pb-8">
+            <ChannelVideos videos={videos} />
+          </div>
         </div>
-        <div className="px-4 pb-8">
-          <ChannelVideos videos={videos} />
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

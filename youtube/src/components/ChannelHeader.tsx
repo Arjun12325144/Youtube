@@ -101,31 +101,36 @@ const ChannelHeader = ({ channel, user }: any) => {
   return (
     <div className="w-full">
       {/* Banner */}
-      <div className="relative h-32 md:h-48 lg:h-64 bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden"></div>
+      <div className="relative h-24 sm:h-32 md:h-48 lg:h-64 bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden"></div>
 
       {/* Channel Info */}
-      <div className="px-4 py-6">
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          <Avatar className="w-20 h-20 md:w-32 md:h-32">
-            <AvatarFallback className="text-2xl font-bold">
+      <div className="px-2 sm:px-4 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-start">
+          <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-32 md:h-32">
+            <AvatarFallback className="text-xl sm:text-2xl font-bold">
               {isClient ? channel?.channelname?.[0] : null}
             </AvatarFallback>
           </Avatar>
 
-          <div className="flex-1 space-y-2">
-            <h1 className="text-2xl md:text-4xl font-bold">{channel?.channelname}</h1>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+          <div className="flex-1 space-y-1 sm:space-y-2 text-center sm:text-left">
+            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold text-[var(--color-foreground)]">{channel?.channelname}</h1>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-4 text-sm text-[var(--color-muted-foreground)]">
               <span>@{channel?.channelname?.toLowerCase().replace(/\s+/g, "")}</span>
+              {subscriberCount !== null && (
+                <span className="sm:hidden">
+                  {subscriberCount.toLocaleString()} subscribers
+                </span>
+              )}
             </div>
             {channel?.description && (
-              <p className="text-sm text-gray-700 max-w-2xl">
+              <p className="text-sm text-[var(--color-muted-foreground)] max-w-2xl line-clamp-2 sm:line-clamp-none">
                 {channel?.description}
               </p>
             )}
           </div>
 
           {user && user?._id !== channel?._id && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
               <Button
                 onClick={async () => {
                   try {
@@ -155,11 +160,12 @@ const ChannelHeader = ({ channel, user }: any) => {
                 className="flex items-center gap-2"
               >
                 <Video className="w-4 h-4" />
-                Video Call
+                <span className="hidden xs:inline">Video Call</span>
+                <span className="xs:hidden">Call</span>
               </Button>
               
               {subscriberCount !== null && (
-                <div className="text-sm text-gray-600 self-center">
+                <div className="hidden sm:block text-sm text-[var(--color-muted-foreground)] self-center">
                   {subscriberCount.toLocaleString()} subscribers
                 </div>
               )}
@@ -171,8 +177,8 @@ const ChannelHeader = ({ channel, user }: any) => {
       {/* Video Call Section */}
       {showVideoCall && user && (
         <div 
-          className="mx-4 mb-4 rounded-lg overflow-hidden"
-          style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+          className="mx-2 sm:mx-4 mb-4 rounded-lg overflow-hidden"
+          style={{ backgroundColor: "var(--color-card)", border: "1px solid var(--color-border)" }}
         >
           <VideoCall
             roomId={channel?._id || "default-room"}

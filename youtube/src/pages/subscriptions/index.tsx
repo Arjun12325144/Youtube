@@ -12,7 +12,19 @@ export default function SubscriptionsPage() {
   const { user } = useUser();
   const [subs, setSubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(true);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -43,19 +55,21 @@ export default function SubscriptionsPage() {
     }
   };
 
+  const mainClass = isMobile ? "ml-0" : sidebarOpen ? "ml-60" : "ml-[72px]";
+
   // Not signed in
   if (!user) {
     return (
       <div className="min-h-screen bg-[var(--color-background)]">
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex pt-14">
-          <Sidebar isOpen={sidebarOpen} />
-          <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-60" : "ml-[72px]"}`}>
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center p-6">
-              <div className="p-4 rounded-full bg-[var(--color-secondary)] mb-4">
-                <Users className="w-12 h-12 text-[var(--color-muted-foreground)]" />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+          <main className={`flex-1 transition-all duration-300 pb-16 lg:pb-0 ${mainClass}`}>
+            <div className="flex flex-col items-center justify-center h-[70vh] text-center p-4 sm:p-6">
+              <div className="p-3 sm:p-4 rounded-full bg-[var(--color-secondary)] mb-4">
+                <Users className="w-10 h-10 sm:w-12 sm:h-12 text-[var(--color-muted-foreground)]" />
               </div>
-              <h2 className="text-2xl font-semibold text-[var(--color-foreground)] mb-2">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[var(--color-foreground)] mb-2">
                 Don't miss new videos
               </h2>
               <p className="text-[var(--color-muted-foreground)] max-w-md">
@@ -72,17 +86,17 @@ export default function SubscriptionsPage() {
     <div className="min-h-screen bg-[var(--color-background)]">
       <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex pt-14">
-        <Sidebar isOpen={sidebarOpen} />
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-60" : "ml-[72px]"}`}>
-          <div className="p-6 max-w-6xl">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+        <main className={`flex-1 transition-all duration-300 pb-16 lg:pb-0 ${mainClass}`}>
+          <div className="p-3 sm:p-4 lg:p-6 max-w-6xl">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-3 rounded-full bg-[var(--color-primary)]/10">
-                <PlaySquare className="w-6 h-6 text-[var(--color-primary)]" />
+            <div className="flex items-center gap-3 mb-6 sm:mb-8">
+              <div className="p-2 sm:p-3 rounded-full bg-[var(--color-primary)]/10">
+                <PlaySquare className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-primary)]" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-[var(--color-foreground)]">Subscriptions</h1>
-                <p className="text-sm text-[var(--color-muted-foreground)]">{subs.length} channels</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-foreground)]">Subscriptions</h1>
+                <p className="text-xs sm:text-sm text-[var(--color-muted-foreground)]">{subs.length} channels</p>
               </div>
             </div>
 

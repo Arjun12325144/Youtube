@@ -79,7 +79,19 @@ export default function PremiumPage() {
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [loading, setLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(true);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchPlans();
@@ -209,32 +221,34 @@ export default function PremiumPage() {
     }
   };
 
+  const mainClass = isMobile ? "ml-0" : sidebarOpen ? "ml-60" : "ml-[72px]";
+
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
       <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex pt-14">
-        <Sidebar isOpen={sidebarOpen} />
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-60" : "ml-[72px]"}`}>
-          <div className="p-6">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+        <main className={`flex-1 transition-all duration-300 pb-16 lg:pb-0 ${mainClass}`}>
+          <div className="p-3 sm:p-4 lg:p-6">
             {/* Hero */}
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white mb-6">
-                <Crown className="w-5 h-5" />
+            <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white mb-4 sm:mb-6 text-sm sm:text-base">
+                <Crown className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="font-medium">YouTube Premium</span>
               </div>
-              <h1 className="text-4xl font-bold text-[var(--color-foreground)] mb-4">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--color-foreground)] mb-3 sm:mb-4">
                 Unlock the full experience
               </h1>
-              <p className="text-lg text-[var(--color-muted-foreground)]">
+              <p className="text-sm sm:text-base lg:text-lg text-[var(--color-muted-foreground)] px-4">
                 Choose the plan that's right for you. Upgrade anytime for more features.
               </p>
             </div>
 
             {/* Current Plan Badge */}
             {currentPlan !== "free" && (
-              <div className="flex justify-center mb-8">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-500">
-                  <Check className="w-5 h-5" />
+              <div className="flex justify-center mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-green-500/10 text-green-500 text-sm sm:text-base">
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="font-medium">Current plan: {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}</span>
                 </div>
               </div>

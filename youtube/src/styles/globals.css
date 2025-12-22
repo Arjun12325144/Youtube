@@ -106,3 +106,19 @@ body {
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
 }
+
+/* Safe area for mobile bottom navigation */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Mobile bottom spacing to prevent content hiding behind nav */
+.pb-mobile-nav {
+  padding-bottom: 3.5rem;
+}
+
+@media (min-width: 1024px) {
+  .pb-mobile-nav {
+    padding-bottom: 0;
+  }
+}
