@@ -124,13 +124,17 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         } else if (tapCount === 2) {
           // Double tap
           if (position === "left") {
-            // Rewind 10 seconds
-            video.currentTime = Math.max(0, video.currentTime - 10);
-            showTapFeedback("-10s", position);
+            // Rewind 10 seconds - check duration is valid
+            if (isFinite(video.currentTime)) {
+              video.currentTime = Math.max(0, video.currentTime - 10);
+              showTapFeedback("-10s", position);
+            }
           } else if (position === "right") {
-            // Forward 10 seconds
-            video.currentTime = Math.min(video.duration, video.currentTime + 10);
-            showTapFeedback("+10s", position);
+            // Forward 10 seconds - check duration is valid
+            if (isFinite(video.duration) && isFinite(video.currentTime)) {
+              video.currentTime = Math.min(video.duration, video.currentTime + 10);
+              showTapFeedback("+10s", position);
+            }
           } else {
             // Double tap center - toggle fullscreen
             toggleFullscreen();

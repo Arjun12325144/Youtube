@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Play } from "lucide-react";
 
 interface VideoCardProps {
@@ -20,12 +20,14 @@ interface VideoCardProps {
 
 export default function VideoCard({ video }: VideoCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [imageError, setImageError] = useState(false);
 
-  const videoUrl = video?.filepath?.startsWith("http")
-    ? video.filepath
-    : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${video?.filepath}`;
+  // Use thumbnail if available, otherwise generate a placeholder
+  const thumbnailUrl = video?.thumbnail?.startsWith("http")
+    ? video.thumbnail
+    : video?.thumbnailUrl?.startsWith("http")
+    ? video.thumbnailUrl
+    : null;
 
   const formatViews = (views: number) => {
     if (views >= 1000000) {
@@ -38,18 +40,10 @@ export default function VideoCard({ video }: VideoCardProps) {
 
   const handleMouseEnter = () => {
     setIsHovered(true);
-    if (videoRef.current && !videoError) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => setVideoError(true));
-    }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
   };
 
   return (
@@ -61,26 +55,26 @@ export default function VideoCard({ video }: VideoCardProps) {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          {/* Video element for preview */}
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            className="w-full h-full object-cover"
-            preload="metadata"
-            muted
-            loop
-            playsInline
-            onError={() => setVideoError(true)}
-          />
-          
-          {/* Play icon overlay when not hovering */}
-          {!isHovered && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                <Play className="w-6 h-6 text-white fill-white ml-1" />
-              </div>
+          {/* Thumbnail image */}
+          {thumbnailUrl && !imageError ? (
+            <img
+              src={thumbnailUrl}
+              alt={video?.videotitle || "Video thumbnail"}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+              <Play className="w-12 h-12 text-white/50" />
             </div>
           )}
+          
+          {/* Play icon overlay */}
+          <div className={`absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
+            <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+              <Play className="w-6 h-6 text-white fill-white ml-1" />
+            </div>
+          </div>
           
           {/* Duration badge */}
           <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">

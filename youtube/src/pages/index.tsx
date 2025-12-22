@@ -18,11 +18,11 @@ export default function Home() {
         <Sidebar isOpen={sidebarOpen} />
         
         <main
-          className={`flex-1 min-h-[calc(100vh-56px)] transition-all duration-300 ${
+          className={`flex-1 min-h-[calc(100vh-56px)] transition-all duration-300 overflow-x-hidden ${
             sidebarOpen ? "ml-60" : "ml-[72px]"
           }`}
         >
-          <div className="p-6">
+          <div className="p-6 max-w-full">
             <CategoryTabs 
               initial={activeCategory}
               onCategoryChange={setActiveCategory} 

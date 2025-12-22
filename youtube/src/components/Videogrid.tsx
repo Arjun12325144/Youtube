@@ -47,7 +47,7 @@ export default function Videogrid({ filterCategory }: VideogridProps) {
   // Loading skeleton
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
         {[...Array(12)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="aspect-video rounded-xl skeleton mb-3" />
@@ -108,7 +108,7 @@ export default function Videogrid({ filterCategory }: VideogridProps) {
 
   // Video grid
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
       {videos.map((video: any) => (
         <VideoCard key={video._id} video={video} />
       ))}
