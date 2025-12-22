@@ -59,10 +59,53 @@ app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(bodyParser.json());
 
+// MongoDB connection with caching for serverless
+let isConnected = false;
+
+const connectToDatabase = async () => {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  try {
+    const DBURL = process.env.DB_URL;
+    if (!DBURL) {
+      throw new Error("DB_URL environment variable is not set");
+    }
+    
+    await mongoose.connect(DBURL, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+    });
+    
+    isConnected = true;
+    console.log("MongoDB connected successfully");
+  } catch (error) {
+    console.error("MongoDB connection error:", error.message);
+    isConnected = false;
+    throw error;
+  }
+};
+
+// Middleware to ensure DB connection before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Database connection failed", 
+      error: error.message 
+    });
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({ 
     status: "success",
     message: "YouTube Clone API is running",
+    dbConnected: isConnected,
     timestamp: new Date().toISOString()
   });
 });
@@ -77,33 +120,6 @@ app.use("/comment", commentroutes);
 app.use("/subscribe", subscriptionRoutes);
 app.use("/download", downloadRoutes);
 app.use("/payment", paymentRoutes);
-
-// MongoDB connection with caching for serverless
-let cachedDb = null;
-
-async function connectToDatabase() {
-  if (cachedDb) {
-    return cachedDb;
-  }
-
-  try {
-    const DBURL = process.env.DB_URL;
-    const connection = await mongoose.connect(DBURL, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
-    
-    cachedDb = connection;
-    console.log("MongoDB connected successfully");
-    return connection;
-  } catch (error) {
-    console.error("MongoDB connection error:", error.message);
-    throw error;
-  }
-}
-
-// Connect on startup
-connectToDatabase().catch(err => console.error("Initial DB connection failed:", err));
 
 // For local development
 if (!process.env.VERCEL) {

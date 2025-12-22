@@ -64,7 +64,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        const response = await fetch("https://ip-api.com/json/?fields=city,regionName,country", {
+        const response = await fetch("https://ipinfo.io/json?token=demo", {
           signal: controller.signal,
         }).catch(() => null);
         
@@ -74,7 +74,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           const data = await response.json();
           const location: UserLocation = {
             city: data.city || "Unknown",
-            state: data.regionName || "Unknown",
+            state: data.region || "Unknown",
             country: data.country || "Unknown",
             isSouthIndia: SOUTH_INDIAN_STATES.some(
               (state) =>

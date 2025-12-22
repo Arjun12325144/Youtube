@@ -90,7 +90,7 @@ const Comments = ({ videoId }: { videoId: string }) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
       
-      const response = await fetch("https://ip-api.com/json/?fields=city,country", {
+      const response = await fetch("https://ipinfo.io/json?token=demo", {
         signal: controller.signal,
       }).catch(() => null);
       
