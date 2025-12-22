@@ -85,31 +85,8 @@ const Comments = ({ videoId }: { videoId: string }) => {
   }, [videoId]);
 
   const fetchUserLocation = async () => {
-    try {
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      const response = await fetch("https://ipinfo.io/json?token=demo", {
-        signal: controller.signal,
-      }).catch(() => null);
-      
-      clearTimeout(timeoutId);
-      
-      if (response && response.ok) {
-        const data = await response.json();
-        setUserLocation({
-          city: data.city || "Unknown",
-          country: data.country || "Unknown",
-        });
-      } else {
-        // Fallback location
-        setUserLocation({ city: "Unknown", country: "Unknown" });
-      }
-    } catch (error) {
-      // Silently handle - location is optional
-      setUserLocation({ city: "Unknown", country: "Unknown" });
-    }
+    // Skip location fetch - just use default values
+    setUserLocation({ city: "Unknown", country: "Unknown" });
   };
 
   const loadComments = async () => {

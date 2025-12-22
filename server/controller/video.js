@@ -106,10 +106,16 @@ export const getallvideo = async (req, res) => {
   try {
     if (mongoose.connection && mongoose.connection.readyState === 1) {
       const files = await video.find().lean();
-      // Normalize any stored filepath values to web-friendly paths
+      // Normalize filepath - keep full URLs (Cloudinary) as-is, fix local paths
       const normalized = (files || []).map((f) => {
-        const name = path.basename(f.filepath || "");
-        return { ...f, filepath: path.join("/uploads", name).replace(/\\/g, "/") };
+        const filepath = f.filepath || "";
+        // If it's already a full URL (Cloudinary), don't modify it
+        if (filepath.startsWith("http://") || filepath.startsWith("https://")) {
+          return { ...f };
+        }
+        // For local files, normalize to web-friendly path
+        const name = path.basename(filepath);
+        return { ...f, filepath: `/uploads/${name}` };
       });
       return res.status(200).json(normalized);
     }
@@ -153,10 +159,16 @@ export const getVideosByUploader = async (req, res) => {
       // Query videos by uploader ObjectId
       const files = await video.find({ uploader: uploaderId }).lean();
       
-      // Normalize filepath values
+      // Normalize filepath - keep full URLs (Cloudinary) as-is, fix local paths
       const normalized = (files || []).map((f) => {
-        const name = path.basename(f.filepath || "");
-        return { ...f, filepath: path.join("/uploads", name).replace(/\\/g, "/") };
+        const filepath = f.filepath || "";
+        // If it's already a full URL (Cloudinary), don't modify it
+        if (filepath.startsWith("http://") || filepath.startsWith("https://")) {
+          return { ...f };
+        }
+        // For local files, normalize to web-friendly path
+        const name = path.basename(filepath);
+        return { ...f, filepath: `/uploads/${name}` };
       });
       
       return res.status(200).json(normalized);

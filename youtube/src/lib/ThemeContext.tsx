@@ -56,68 +56,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Fetch location and determine default theme
+  // Set theme based on time (no location API needed)
   useEffect(() => {
-    const fetchLocation = async () => {
-      try {
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        
-        const response = await fetch("https://ipinfo.io/json?token=demo", {
-          signal: controller.signal,
-        }).catch(() => null);
-        
-        clearTimeout(timeoutId);
-        
-        if (response && response.ok) {
-          const data = await response.json();
-          const location: UserLocation = {
-            city: data.city || "Unknown",
-            state: data.region || "Unknown",
-            country: data.country || "Unknown",
-            isSouthIndia: SOUTH_INDIAN_STATES.some(
-              (state) =>
-                data.region?.toLowerCase().includes(state) ||
-                data.city?.toLowerCase().includes(state)
-            ),
-          };
-          setUserLocation(location);
-
-          // Only set default theme based on location if no saved preference
-          const savedTheme = localStorage.getItem("theme");
-          if (!savedTheme) {
-            const currentHour = new Date().getHours();
-            const isMorningTime = currentHour >= 10 && currentHour < 12;
-            if (isMorningTime && location.isSouthIndia) {
-              setThemeState("light");
-            } else {
-              setThemeState("dark");
-            }
-          }
-        } else {
-          // Fallback: use default theme based on time only
-          const savedTheme = localStorage.getItem("theme");
-          if (!savedTheme) {
-            const currentHour = new Date().getHours();
-            // Light theme during day (6am - 6pm), dark otherwise
-            setThemeState(currentHour >= 6 && currentHour < 18 ? "light" : "dark");
-          }
-        }
-      } catch (error) {
-        // Silently handle location fetch errors
-        console.warn("Location fetch failed, using default theme");
-        const savedTheme = localStorage.getItem("theme");
-        if (!savedTheme) {
-          const currentHour = new Date().getHours();
-          setThemeState(currentHour >= 6 && currentHour < 18 ? "light" : "dark");
-        }
-      } finally {
-        setIsLoading(false);
+    const setThemeByTime = () => {
+      const savedTheme = localStorage.getItem("theme");
+      if (!savedTheme) {
+        const currentHour = new Date().getHours();
+        // Light theme during day (6am - 6pm), dark otherwise
+        setThemeState(currentHour >= 6 && currentHour < 18 ? "light" : "dark");
       }
+      setIsLoading(false);
     };
 
-    fetchLocation();
+    setThemeByTime();
   }, []);
 
   // Apply theme classes to document
