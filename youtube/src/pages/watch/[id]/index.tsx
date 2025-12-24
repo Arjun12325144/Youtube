@@ -12,6 +12,7 @@ import VideoCall from "@/components/VideoCall";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
 import { getVideoUrl, getThumbnailUrl } from "@/lib/utils";
+import { isSocketAvailable } from "@/lib/socket";
 import { Download, Loader2, Video as VideoIcon, Phone, PhoneOff, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function WatchPage() {
@@ -29,12 +30,15 @@ export default function WatchPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [canUseVideoCall, setCanUseVideoCall] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener("resize", checkMobile);
+    // Check if video call is available
+    setCanUseVideoCall(isSocketAvailable());
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
@@ -170,16 +174,18 @@ export default function WatchPage() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${downloading ? "bg-[var(--color-muted)] text-[var(--color-muted-foreground)] cursor-not-allowed" : "bg-[var(--color-secondary)] text-[var(--color-foreground)] hover:bg-[var(--color-accent)]"}`}>
                       {downloading ? <><Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /><span className="hidden sm:inline">Downloading...</span><span className="sm:hidden">...</span></> : <><Download className="w-3 h-3 sm:w-4 sm:h-4" /><span>Download</span></>}
                     </button>
-                    <button onClick={() => setShowVideoCall(!showVideoCall)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${showVideoCall ? "bg-red-500 text-white hover:bg-red-600" : "bg-[var(--color-secondary)] text-[var(--color-foreground)] hover:bg-[var(--color-accent)]"}`}>
-                      {showVideoCall ? <><PhoneOff className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline">End Call</span></> : <><Phone className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Video Call</span><span className="sm:hidden">Call</span></>}
-                    </button>
+                    {canUseVideoCall && (
+                      <button onClick={() => setShowVideoCall(!showVideoCall)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${showVideoCall ? "bg-red-500 text-white hover:bg-red-600" : "bg-[var(--color-secondary)] text-[var(--color-foreground)] hover:bg-[var(--color-accent)]"}`}>
+                        {showVideoCall ? <><PhoneOff className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline">End Call</span></> : <><Phone className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Video Call</span><span className="sm:hidden">Call</span></>}
+                      </button>
+                    )}
                     {downloadError && <span className="flex items-center gap-1 text-xs sm:text-sm text-red-500"><AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" /><span className="line-clamp-1">{downloadError}</span></span>}
                     {downloadSuccess && <span className="flex items-center gap-1 text-xs sm:text-sm text-green-500"><CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />Downloaded!</span>}
                   </div>
                 </div>
                 
-                {showVideoCall && user && (
+                {showVideoCall && user && canUseVideoCall && (
                   <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4">
                     <VideoCall roomId={videoId || "default-room"} userId={user._id} userName={user.name || "Anonymous"} />
                   </div>

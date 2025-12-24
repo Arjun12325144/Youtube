@@ -40,7 +40,7 @@ import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import axiosInstance from "@/lib/axiosinstance";
-import { getSocket } from "@/lib/socket";
+import { getSocket, isSocketAvailable } from "@/lib/socket";
 import { Video } from "lucide-react";
 import VideoCall from "./VideoCall";
 
@@ -49,9 +49,11 @@ const ChannelHeader = ({ channel, user }: any) => {
   const [isClient, setIsClient] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
   const [showVideoCall, setShowVideoCall] = useState(false);
+  const [canUseVideoCall, setCanUseVideoCall] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    setCanUseVideoCall(isSocketAvailable());
   }, []);
 
   // load subscription status and count
@@ -153,16 +155,18 @@ const ChannelHeader = ({ channel, user }: any) => {
                 {isSubscribed ? "Subscribed" : "Subscribe"}
               </Button>
               
-              {/* Video Call Button */}
-              <Button
-                variant="outline"
-                onClick={() => setShowVideoCall(true)}
-                className="flex items-center gap-2"
-              >
-                <Video className="w-4 h-4" />
-                <span className="hidden xs:inline">Video Call</span>
-                <span className="xs:hidden">Call</span>
-              </Button>
+              {/* Video Call Button - only show if WebSocket is available */}
+              {canUseVideoCall && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowVideoCall(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Video className="w-4 h-4" />
+                  <span className="hidden xs:inline">Video Call</span>
+                  <span className="xs:hidden">Call</span>
+                </Button>
+              )}
               
               {subscriberCount !== null && (
                 <div className="hidden sm:block text-sm text-[var(--color-muted-foreground)] self-center">
@@ -174,8 +178,8 @@ const ChannelHeader = ({ channel, user }: any) => {
         </div>
       </div>
 
-      {/* Video Call Section */}
-      {showVideoCall && user && (
+      {/* Video Call Section - only show if WebSocket is available */}
+      {showVideoCall && user && canUseVideoCall && (
         <div 
           className="mx-2 sm:mx-4 mb-4 rounded-lg overflow-hidden"
           style={{ backgroundColor: "var(--color-card)", border: "1px solid var(--color-border)" }}

@@ -14,6 +14,7 @@ import {
   Square,
   Download,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { getSocket } from "@/lib/socket";
@@ -36,11 +37,21 @@ const VideoCall: React.FC<VideoCallProps> = ({ roomId, userId, userName }) => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [callStatus, setCallStatus] = useState<"idle" | "connecting" | "connected" | "ended">("idle");
+  const [callStatus, setCallStatus] = useState<"idle" | "connecting" | "connected" | "ended" | "unavailable">("idle");
   const [participants, setParticipants] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [socketAvailable, setSocketAvailable] = useState(true);
+
+  // Check socket availability on mount
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) {
+      setSocketAvailable(false);
+      setCallStatus("unavailable");
+    }
+  }, []);
 
   // WebRTC refs
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -447,7 +458,25 @@ const VideoCall: React.FC<VideoCallProps> = ({ roomId, userId, userName }) => {
         </div>
 
         {/* Status Overlay */}
-        {callStatus === "idle" && (
+        {callStatus === "unavailable" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 p-4">
+            <AlertTriangle className="w-16 h-16 text-yellow-500 mb-4" />
+            <p className="text-white text-lg font-semibold mb-2 text-center">Video Calling Unavailable</p>
+            <p className="text-gray-300 text-sm text-center max-w-xs mb-4">
+              Video calling requires WebSocket support which is not available on serverless deployments (Vercel).
+            </p>
+            <div className="text-gray-400 text-xs text-center">
+              <p>To enable video calling, deploy the backend to:</p>
+              <ul className="mt-2 space-y-1">
+                <li>• Railway, Render, or Fly.io</li>
+                <li>• DigitalOcean, AWS EC2, or any VPS</li>
+                <li>• Your local machine for development</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {callStatus === "idle" && socketAvailable && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80">
             <Video className="w-16 h-16 text-white mb-4" />
             <p className="text-white mb-4">Start a video call</p>

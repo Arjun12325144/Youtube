@@ -1,9 +1,15 @@
 import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
+let socketDisabled = false;
+
+export function isSocketAvailable(): boolean {
+  return !socketDisabled;
+}
 
 export function getSocket(): Socket | null {
   if (typeof window === "undefined") return null;
+  if (socketDisabled) return null;
   if (socket && socket.connected) return socket;
 
   // Use NEXT_PUBLIC_BACKEND_URL if available, fallback to localhost:5000
@@ -14,6 +20,7 @@ export function getSocket(): Socket | null {
 
   // Disable Socket.IO for Vercel deployments (serverless doesn't support WebSocket)
   if (backend.includes('.vercel.app')) {
+    socketDisabled = true;
     console.warn("Socket.IO disabled: Backend is on Vercel serverless (WebSocket not supported)");
     return null;
   }
